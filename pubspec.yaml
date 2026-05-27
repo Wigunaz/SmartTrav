@@ -1,0 +1,28 @@
+name: smarttrav
+description: "A smart travel planner application."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.19.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Untuk ikon-ikon pelengkap UI di halaman Profile & History
+  google_fonts: ^4.0.4  # Tambahan untuk mempercantik font Inter di UI Anda
+  cupertino_icons: ^1.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Jika Anda menggunakan aset gambar lokal di kemudian hari, daftarkan di sini
+  # assets:
+  #   - assets/images/

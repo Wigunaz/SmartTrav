@@ -1,4 +1,4 @@
-class TripPlannerData {
+class TripPlanner {
   double totalBudget;
   String destination;
   int durationDays;
@@ -8,11 +8,10 @@ class TripPlannerData {
   String selectedAgency;
   double agencyCostPerDay;
 
-  // Nilai cost default berdasarkan data di desain
   double flightCost = 850.00;
   double activitiesAndFoodCost = 450.00;
 
-  TripPlannerData({
+  TripPlanner({
     required this.totalBudget,
     required this.destination,
     required this.durationDays,

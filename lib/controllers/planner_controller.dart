@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import '../models/trip_model.dart';
+import '../models/trip_planner_model.dart';
 import '../views/planner/widgets/budget_overlimit_sheet.dart';
 
-class TripPlannerController {
-  late TripPlannerData model;
+class PlannerController {
+  late TripPlanner model;
 
   void initData() {
-    // Inisialisasi data berdasarkan nilai awal pada screenshot desain
-    model = TripPlannerData(
+    model = TripPlanner(
       totalBudget: 1500.00,
       destination: 'Tokyo, Japan',
       durationDays: 5,
@@ -15,8 +14,21 @@ class TripPlannerController {
       selectedAttractions: ['Shibuya Crossing', 'Mount Fuji'],
       selectedFoods: ['Ramen'],
       selectedAgency: 'Nippon Express',
-      agencyCostPerDay: 420.00, // $420/day
+      agencyCostPerDay: 420.00,
     );
+  }
+
+  void updateBudget(double value) {
+    model.totalBudget = value;
+  }
+
+  void updateDuration(int days) {
+    model.durationDays = days;
+  }
+
+  void selectAgency(String agency, double cost) {
+    model.selectedAgency = agency;
+    model.agencyCostPerDay = cost;
   }
 
   void checkBudgetConstraint(BuildContext context) {
