@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smarttrav/views/main_navigation_wrapper.dart';
+// 1. TAMBAHKAN IMPORT BARU UNTUK HALAMAN LOGIN
+import 'package:smarttrav/views/auth/login_view.dart'; 
 
 void main() {
   runApp(const SmartTravApp());
@@ -16,9 +17,10 @@ class SmartTravApp extends StatelessWidget {
       theme: ThemeData(
         primaryColor: const Color(0xFF0F172A),
         fontFamily: 'Inter',
+        scaffoldBackgroundColor: Colors.white,
       ),
-      // Kata 'const' di bawah ini sudah dihapus agar tidak memicu error dinamis
-      home: const MainNavigationWrapper(), 
+      // 2. UBAH BAGIAN INI AGAR MENGARAH KE LOGINVIEW SEBAGAI HALAMAN PERTAMA
+      home: const LoginView(), 
     );
   }
 }
