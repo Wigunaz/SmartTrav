@@ -10,9 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # Untuk ikon-ikon pelengkap UI di halaman Profile & History
-  google_fonts: ^4.0.4  # Tambahan untuk mempercantik font Inter di UI Anda
+  shimmer: ^3.0.0
+  google_fonts: ^4.0.4
   cupertino_icons: ^1.0.5
 
 dev_dependencies:
