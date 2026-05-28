@@ -6,15 +6,16 @@ class PlannerController {
   late TripPlanner model;
 
   void initData() {
+    // Mengubah nilai default menjadi kosong/0 agar tampilan awal bersih
     model = TripPlanner(
-      totalBudget: 1500.00,
-      destination: 'Tokyo, Japan',
-      durationDays: 5,
-      selectedHotel: 'Shinagawa Prince Hotel',
-      selectedAttractions: ['Shibuya Crossing', 'Mount Fuji'],
-      selectedFoods: ['Ramen'],
-      selectedAgency: 'Nippon Express',
-      agencyCostPerDay: 420.00,
+      totalBudget: 0.0,
+      destination: '',
+      durationDays: 0,
+      selectedHotel: '',
+      selectedAttractions: [],
+      selectedFoods: [],
+      selectedAgency: '',
+      agencyCostPerDay: 0.0,
     );
   }
 

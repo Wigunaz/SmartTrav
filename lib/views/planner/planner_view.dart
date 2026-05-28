@@ -11,14 +11,30 @@ class PlannerView extends StatefulWidget {
 class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin {
   final PlannerController _controller = PlannerController();
 
-  // State lokal untuk interaksi dinamis attractions & foods
-  final List<String> _selectedAttractions = ['Shibuya Crossing', 'Mount Fuji'];
-  final List<String> _selectedFoods = ['Ramen'];
+  // State lokal untuk interaksi dinamis attractions & foods (Dikosongkan sejak awal)
+  final List<String> _selectedAttractions = [];
+  final List<String> _selectedFoods = [];
 
   @override
   void initState() {
     super.initState();
+    
+    // 1. Inisialisasi konfigurasi dasar dari controller
     _controller.initData();
+    
+    // 2. PAKSA KOSONGKAN semua data bawaan di level model agar tidak muncul angka default
+    _controller.model.totalBudget = 0.0;
+    _controller.model.destination = ''; 
+    _controller.model.durationDays = 0;
+    _controller.model.selectedHotel = ''; 
+    _controller.model.selectedAgency = '';
+    _controller.model.selectedAttractions = [];
+    _controller.model.selectedFoods = [];
+
+    // 3. Pastikan list state lokal di view ini juga ikut kosong total
+    _selectedAttractions.clear();
+    _selectedFoods.clear();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.checkBudgetConstraint(context);
     });
@@ -93,10 +109,12 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
             ),
             const SizedBox(height: 8),
             TextFormField(
-              initialValue: _controller.model.totalBudget.toInt().toString(),
+              key: ValueKey(_controller.model.totalBudget),
+              initialValue: _controller.model.totalBudget == 0.0 ? '' : _controller.model.totalBudget.toInt().toString(),
               keyboardType: TextInputType.number,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
               decoration: InputDecoration(
+                hintText: '0',
                 prefixIcon: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                   child: Text('\$', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
@@ -125,7 +143,8 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                       const Text("DESTINATION", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<String>(
-                        value: _controller.model.destination,
+                        value: _controller.model.destination.isEmpty ? null : _controller.model.destination,
+                        hint: const Text('Select Location', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
                         icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
                         decoration: InputDecoration(
                           filled: true,
@@ -158,10 +177,12 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                       const Text("DURATION (DAYS)", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                       const SizedBox(height: 8),
                       TextFormField(
-                        initialValue: _controller.model.durationDays.toString(),
+                        key: ValueKey(_controller.model.durationDays),
+                        initialValue: _controller.model.durationDays == 0 ? '' : _controller.model.durationDays.toString(),
                         keyboardType: TextInputType.number,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                         decoration: InputDecoration(
+                          hintText: '0',
                           filled: true,
                           fillColor: const Color(0xFFF8FAFC),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -169,7 +190,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                         ),
                         onChanged: (value) {
                           setState(() {
-                            _controller.updateDuration(int.tryParse(value) ?? 1);
+                            _controller.updateDuration(int.tryParse(value) ?? 0);
                             _controller.checkBudgetConstraint(context);
                           });
                         },
@@ -188,7 +209,8 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                 const Text("HOTEL & VILLA'S", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _controller.model.selectedHotel,
+                  value: _controller.model.selectedHotel.isEmpty ? null : _controller.model.selectedHotel,
+                  hint: const Text('Select Lodgement', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
                   decoration: InputDecoration(
                     filled: true,
@@ -309,7 +331,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                   
                   // ANIMASI ELEGAN: Tombol "Let's Flight" muncul melambat hanya jika budget cukup
                   AnimatedCrossFade(
-                    duration: const Duration(milliseconds: 700), // Lambat dan halus
+                    duration: const Duration(milliseconds: 700),
                     firstCurve: Curves.easeOutCubic,
                     secondCurve: Curves.easeInCubic,
                     crossFadeState: !isOverlimit ? CrossFadeState.showFirst : CrossFadeState.showSecond,
@@ -334,9 +356,9 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                                 ),
                               );
                             },
-                            child: Row(
+                            child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
+                              children: [
                                 Text("Let's Flight", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                                 SizedBox(width: 8),
                                 Icon(Icons.flight_takeoff_rounded, color: Colors.white, size: 18),
@@ -363,12 +385,11 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
 
   // ================== ANIMATED COMPONENTS BUILDERS ==================
 
-  // 1. Animasi Slow-Elegant untuk Penambahan & Penghapusan Wisata/Makanan (Chips)
   Widget _buildAnimatedFilterChip({required String label, required bool isSelected, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500), // Transisi warna melambat dan rileks
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
@@ -391,7 +412,6 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
               ),
               child: Text(label),
             ),
-            // Ikon penutup mengecil/membesar dengan animasi transisi struktural
             AnimatedContainer(
               duration: const Duration(milliseconds: 400),
               width: isSelected ? 20 : 0,
@@ -408,7 +428,6 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
     );
   }
 
-  // 2. Animasi Slow-Elegant untuk Pemilihan Kartu Agensi Wisata
   Widget _buildAnimatedAgencyCard({
     required String name,
     required String price,
@@ -419,7 +438,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600), // Animasi border & shadow halus bergaya profesional
+        duration: const Duration(milliseconds: 600),
         curve: Curves.easeOutQuint,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
