@@ -443,7 +443,6 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                   borderRadius: BorderRadius.circular(8),
                   child: Image.network('https://images.unsplash.com/photo-1537996194471-e657df975ab4', width: 32, height: 32, fit: BoxFit.cover),
                 ),
-                // Skala ikon centang membesar perlahan
                 AnimatedScale(
                   scale: isSelected ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 500),
