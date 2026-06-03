@@ -11,9 +11,13 @@ class PlannerView extends StatefulWidget {
 class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin {
   final PlannerController _controller = PlannerController();
 
-  // State lokal untuk interaksi dinamis attractions & foods (Dikosongkan sejak awal)
-  final List<String> _selectedAttractions = [];
-  final List<String> _selectedFoods = [];
+  // State lokal baru untuk kriteria planner yang mengalir ke bawah
+  int _passengerCount = 1;
+  String _selectedTravelStyle = 'Standard';
+
+  // Opsi untuk filter dropdown dan chips
+  final List<String> _destinations = ['Bali, Indonesia', 'Yogyakarta', 'Lombok', 'Labuan Bajo'];
+  final List<String> _travelStyles = ['Backpacker', 'Standard', 'Luxury'];
 
   @override
   void initState() {
@@ -22,45 +26,18 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
     // 1. Inisialisasi konfigurasi dasar dari controller
     _controller.initData();
     
-    // 2. PAKSA KOSONGKAN semua data bawaan di level model agar tidak muncul angka default
+    // 2. PAKSA KOSONGKAN/RESET data awal agar sinkron dengan sistem form mengalir ke bawah
     _controller.model.totalBudget = 0.0;
     _controller.model.destination = ''; 
     _controller.model.durationDays = 0;
-    _controller.model.selectedHotel = ''; 
-    _controller.model.selectedAgency = '';
-    _controller.model.selectedAttractions = [];
-    _controller.model.selectedFoods = [];
-
-    // 3. Pastikan list state lokal di view ini juga ikut kosong total
-    _selectedAttractions.clear();
-    _selectedFoods.clear();
+    _controller.model.selectedAgency = ''; // Nanti ini diisi nama paket yang dipilih
+    
+    // Sinkronisasi ke state lokal awal
+    _passengerCount = 1;
+    _selectedTravelStyle = 'Standard';
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _controller.checkBudgetConstraint(context);
-    });
-  }
-
-  // Fungsi toggle item wisata dengan animasi state
-  void _toggleAttraction(String name) {
-    setState(() {
-      if (_selectedAttractions.contains(name)) {
-        _selectedAttractions.remove(name);
-      } else {
-        _selectedAttractions.add(name);
-      }
-      _controller.model.selectedAttractions = _selectedAttractions;
-    });
-  }
-
-  // Fungsi toggle item kuliner dengan animasi state
-  void _toggleFood(String name) {
-    setState(() {
-      if (_selectedFoods.contains(name)) {
-        _selectedFoods.remove(name);
-      } else {
-        _selectedFoods.add(name);
-      }
-      _controller.model.selectedFoods = _selectedFoods;
     });
   }
 
@@ -102,7 +79,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ================== SECTION: SET TOTAL BUDGET ==================
+            // ================== SECTION 1: SET TOTAL BUDGET ==================
             const Text(
               "SET TOTAL BUDGET",
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B), letterSpacing: 0.5),
@@ -117,7 +94,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                 hintText: '0',
                 prefixIcon: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                  child: Text('\$', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                  child: Text('Rp ', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
                 ),
                 filled: true,
                 fillColor: const Color(0xFFF8FAFC),
@@ -133,7 +110,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
             ),
             const SizedBox(height: 24),
 
-            // ================== ROW: DESTINATION & DURATION ==================
+            // ================== SECTION 2: DESTINATION & DURATION ==================
             Row(
               children: [
                 Expanded(
@@ -152,7 +129,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
-                        items: ['Tokyo, Japan', 'Bali, Indonesia', 'Paris, France'].map((String value) {
+                        items: _destinations.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(value, style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15)),
@@ -202,103 +179,90 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
             ),
             const SizedBox(height: 24),
 
-            // ================== SECTION: HOTEL & VILLA'S ==================
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("HOTEL & VILLA'S", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: _controller.model.selectedHotel.isEmpty ? null : _controller.model.selectedHotel,
-                  hint: const Text('Select Lodgement', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                  items: ['Shinagawa Prince Hotel', 'The Ritz-Carlton Tokyo', 'Hotel New Otani', 'Park Hyatt Tokyo'].map((String hotel) {
-                    return DropdownMenuItem<String>(
-                      value: hotel,
-                      child: Text(hotel, style: const TextStyle(color: Color(0xFF0F172A), fontSize: 15), overflow: TextOverflow.ellipsis),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      if (newValue != null) {
-                        _controller.model.selectedHotel = newValue;
-                      }
-                    });
-                  },
-                ),
-              ],
+            // ================== SECTION 3: PASSENGER COUNT (COUNTER) ==================
+            const Text("NUMBER OF TRAVELERS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Total Persons", style: TextStyle(color: Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w500)),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: _passengerCount > 1 
+                            ? () => setState(() => _passengerCount--) 
+                            : null,
+                        icon: const Icon(Icons.remove_circle_outline, color: Color(0xFF3B82F6)),
+                      ),
+                      Text(
+                        '$_passengerCount',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                      IconButton(
+                        onPressed: () => setState(() => _passengerCount++),
+                        icon: const Icon(Icons.add_circle_outline, color: Color(0xFF3B82F6)),
+                      ),
+                    ],
+                  )
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
-            // ================== SECTION: TOURIST ATTRACTIONS ==================
-            const Text("TOURIST ATTRACTIONS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            // ================== SECTION 4: TRAVEL STYLE (CHIPS) ==================
+            const Text("TRAVEL STYLE", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ['Shibuya Crossing', 'Mount Fuji', 'Akihabara', 'Senso-ji'].map((item) {
-                final isSelected = _selectedAttractions.contains(item);
+              children: _travelStyles.map((style) {
+                final isSelected = _selectedTravelStyle == style;
                 return _buildAnimatedFilterChip(
-                  label: isSelected ? item : '+ $item',
+                  label: style,
                   isSelected: isSelected,
-                  onTap: () => _toggleAttraction(item),
+                  onTap: () => setState(() => _selectedTravelStyle = style),
                 );
               }).toList(),
             ),
             const SizedBox(height: 24),
 
-            // ================== SECTION: TYPICAL FOODS ==================
-            const Text("TYPICAL FOODS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ['Ramen', 'Sushi', 'Takoyaki'].map((item) {
-                final isSelected = _selectedFoods.contains(item);
-                return _buildAnimatedFilterChip(
-                  label: isSelected ? item : '+ $item',
-                  isSelected: isSelected,
-                  onTap: () => _toggleFood(item),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
-
-            // ================== SECTION: SELECT AGENCY ==================
-            const Text("SELECT AGENCY", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+            // ================== SECTION 5: AVAILABLE AGENCY PACKAGES ==================
+            const Text("AVAILABLE PACKAGES BASED ON BUDGET", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
                   child: _buildAnimatedAgencyCard(
-                    name: 'Nippon Express',
-                    price: '\$420/day',
-                    rating: '4.9 (2.1k reviews)',
-                    isSelected: _controller.model.selectedAgency == 'Nippon Express',
-                    onTap: () => setState(() => _controller.selectAgency('Nippon Express', 420.00)),
+                    name: 'Paket Kuta-Ubud 3D2N',
+                    agency: 'Global Tours',
+                    totalPrice: 'Rp 1.200.000',
+                    rating: '4.7 (1.5k reviews)',
+                    isSelected: _controller.model.selectedAgency == 'Global Tours',
+                    onTap: () => setState(() => _controller.selectAgency('Global Tours', 1200000.00)),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildAnimatedAgencyCard(
-                    name: 'Global Tours',
-                    price: '\$380/day',
-                    rating: '4.7 (1.5k reviews)',
-                    isSelected: _controller.model.selectedAgency == 'Global Tours',
-                    onTap: () => setState(() => _controller.selectAgency('Global Tours', 380.00)),
+                    name: 'Paket Nusa Penida Explorer',
+                    agency: 'Nippon Express',
+                    totalPrice: 'Rp 1.850.000',
+                    rating: '4.9 (2.1k reviews)',
+                    isSelected: _controller.model.selectedAgency == 'Nippon Express',
+                    onTap: () => setState(() => _controller.selectAgency('Nippon Express', 1850000.00)),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 32),
 
-            // ================== BOX: ESTIMATED COSTS SUMMARY ==================
+            // ================== SECTION 6: ESTIMATED COSTS SUMMARY ==================
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -308,33 +272,33 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Estimated Costs', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  const Text('Estimated Cost Summary', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
-                  _buildCostRow('Flights (Round Trip)', '\$${_controller.model.flightCost.toInt()}.00'),
+                  _buildCostRow('Base Package Fee', _controller.model.selectedAgency.isEmpty ? 'Rp 0' : 'Rp ${_controller.model.hotelAndAgencyCost.toInt()}'),
                   const SizedBox(height: 12),
-                  _buildCostRow('Hotel & Agency (${_controller.model.durationDays} Days)', '\$${_controller.model.hotelAndAgencyCost.toInt()}.00'),
-                  const SizedBox(height: 12),
-                  _buildCostRow('Activities & Food', '\$${_controller.model.activitiesAndFoodCost.toInt()}.00'),
+                  _buildCostRow('Platform Admin (10%)', 'Included'),
                   const SizedBox(height: 16),
                   const Divider(color: Colors.white24, thickness: 1),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Total Estimated', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text('Total Package Price', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       Text(
-                        '\$${_controller.model.totalEstimatedCost.toInt().toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},")}.00',
-                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                        'Rp ${_controller.model.totalEstimatedCost.toInt().toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},")}',
+                        style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                   
-                  // ANIMASI ELEGAN: Tombol "Let's Flight" muncul melambat hanya jika budget cukup
+                  // Tombol Checkout / Pesan Paket yang interaktif
                   AnimatedCrossFade(
                     duration: const Duration(milliseconds: 700),
                     firstCurve: Curves.easeOutCubic,
                     secondCurve: Curves.easeInCubic,
-                    crossFadeState: !isOverlimit ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                    crossFadeState: !isOverlimit && _controller.model.totalEstimatedCost > 0 
+                        ? CrossFadeState.showFirst 
+                        : CrossFadeState.showSecond,
                     secondChild: const SizedBox(width: double.infinity),
                     firstChild: Column(
                       children: [
@@ -351,7 +315,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Processing payment... safe flight! ✈️'),
+                                  content: Text('Processing Down Payment to Escrow... safe trip! ✈️'),
                                   backgroundColor: Colors.green,
                                 ),
                               );
@@ -359,9 +323,9 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text("Let's Flight", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                                Text("Book Package Now", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                                 SizedBox(width: 8),
-                                Icon(Icons.flight_takeoff_rounded, color: Colors.white, size: 18),
+                                Icon(Icons.assignment_turned_in_rounded, color: Colors.white, size: 18),
                               ],
                             ),
                           ),
@@ -389,40 +353,23 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(20),
           boxShadow: isSelected 
-              ? [BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 4))]
+              ? [BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))]
               : [],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 400),
-              style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF64748B),
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontFamily: 'Inter',
-              ),
-              child: Text(label),
-            ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 400),
-              width: isSelected ? 20 : 0,
-              child: isSelected
-                  ? const Padding(
-                      padding: EdgeInsets.only(left: 6.0),
-                      child: Icon(Icons.close, color: Colors.white, size: 14),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF64748B),
+            fontSize: 14,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          ),
         ),
       ),
     );
@@ -430,7 +377,8 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
 
   Widget _buildAnimatedAgencyCard({
     required String name,
-    required String price,
+    required String agency,
+    required String totalPrice,
     required String rating,
     required bool isSelected,
     required VoidCallback onTap,
@@ -438,7 +386,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 600),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeOutQuint,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -449,7 +397,7 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected 
-              ? [BoxShadow(color: const Color(0xFF3B82F6).withValues(alpha: 0.1), blurRadius: 12, offset: const Offset(0, 6))]
+              ? [BoxShadow(color: const Color(0xFF3B82F6).withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 6))]
               : [],
         ),
         child: Column(
@@ -464,31 +412,39 @@ class _PlannerViewState extends State<PlannerView> with TickerProviderStateMixin
                 ),
                 AnimatedScale(
                   scale: isSelected ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 500),
+                  duration: const Duration(milliseconds: 400),
                   curve: Curves.elasticOut,
                   child: const Icon(Icons.check_circle, color: Color(0xFF3B82F6), size: 20),
                 )
               ],
             ),
             const SizedBox(height: 12),
-            Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
-            const SizedBox(height: 4),
+            Text(
+              name, 
+              key: const ValueKey('pkg_title'), 
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A)), 
+              maxLines: 2, 
+              overflow: TextOverflow.ellipsis
+            ),
+            const SizedBox(height: 2),
+            Text('by $agency', style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
+            const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.star, color: Colors.amber, size: 14),
+                const Icon(Icons.star, color: Colors.amber, size: 12),
                 const SizedBox(width: 4),
-                Text(rating, style: const TextStyle(color: Color(0xFF64748B), fontSize: 11)),
+                Expanded(child: Text(rating, style: const TextStyle(color: Color(0xFF64748B), fontSize: 10), overflow: TextOverflow.ellipsis)),
               ],
             ),
             const SizedBox(height: 12),
             AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 400),
+              duration: const Duration(milliseconds: 300),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF64748B),
+                color: isSelected ? const Color(0xFF3B82F6) : const Color(0xFF0F172A),
               ),
-              child: Text(price),
+              child: Text(totalPrice),
             ),
           ],
         ),
